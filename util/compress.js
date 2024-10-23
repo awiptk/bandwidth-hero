@@ -1,41 +1,30 @@
 const sharp = require("sharp");
-const imagemin = require('imagemin');
-const imageminMozjpeg = require('imagemin-mozjpeg');
 
-function compress(input, webp, grayscale, quality, originSize, maxWidth) {
+function compress(input, webp, grayscale, quality, originSize, maxWidth = 500) {
     const format = webp ? "webp" : "jpeg";
 
+    // Kompres dan resize gambar, atur lebar maksimum menjadi 500px
     return sharp(input)
-        .resize({ width: maxWidth, kernel: sharp.kernel.lanczos3 })  // Gunakan filter Lanczos3 untuk hasil resize halus
+        .resize({ width: maxWidth, kernel: sharp.kernel.lanczos3 })  // Resize gambar dengan lebar maksimum 500px, menjaga aspek rasio
         .grayscale(grayscale)
         .toFormat(format, {
-            quality: quality,  // Kualitas kompresi yang lebih tinggi
-            progressive: false,  // Nonaktifkan progressive untuk kualitas maksimum
+            quality: quality || 90,  // Kualitas kompresi default ke 90 jika tidak ditentukan
+            progressive: true,
             optimizeScans: true
         })
         .toBuffer({ resolveWithObject: true })
-        .then(async ({ data: output, info }) => {
-            // Jika format adalah JPEG, kita lakukan kompresi tambahan menggunakan Imagemin
-            if (format === "jpeg") {
-                output = await imagemin.buffer(output, {
-                    plugins: [
-                        imageminMozjpeg({ quality: quality })  // Gunakan Imagemin untuk kompresi JPEG yang lebih baik
-                    ]
-                });
-            }
-
+        .then(({ data: output, info }) => {
             return {
                 err: null,
                 headers: {
                     "content-type": `image/${format}`,
-                    "content-length": output.length,
+                    "content-length": info.size,
                     "x-original-size": originSize,
-                    "x-bytes-saved": originSize - output.length,
+                    "x-bytes-saved": originSize - info.size,
                 },
                 output: output
             };
-        })
-        .catch(err => {
+        }).catch(err => {
             return {
                 err: err
             };
