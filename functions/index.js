@@ -3,7 +3,8 @@ const fetch = require("node-fetch");
 const shouldCompress = require("../util/shouldCompress");
 const compress = require("../util/compress");
 
-const DEFAULT_QUALITY = 40; // Kualitas default
+const DEFAULT_QUALITY = 99;  // Ubah kualitas default menjadi 30
+const MAX_WIDTH = 300;  // Tambahkan batas lebar maksimum gambar
 
 exports.handler = async (event, context) => {
     let { url } = event.queryStringParameters;
@@ -44,28 +45,28 @@ exports.handler = async (event, context) => {
             if (!res.ok) {
                 return {
                     statusCode: res.status || 302
-                };
+                }
             }
 
             response_headers = res.headers;
             return {
                 data: await res.buffer(),
                 type: res.headers.get("content-type") || ""
-            };
-        });
+            }
+        })
 
         const originSize = data.length;
 
         if (shouldCompress(originType, originSize, webp)) {
-            // Di sini kita mengatur maxWidth menjadi 500
-            const { err, output, headers } = await compress(data, webp, grayscale, quality, originSize, 500); // Memastikan maxWidth adalah 500
+            // Tambahkan parameter MAX_WIDTH untuk membatasi lebar gambar
+            const { err, output, headers } = await compress(data, webp, grayscale, quality, originSize, MAX_WIDTH);   
 
             if (err) {
                 console.log("Conversion failed: ", url);
                 throw err;
             }
 
-            console.log(`From ${originSize}, Saved: ${(originSize - output.length) / originSize * 100}%`);
+            console.log(`From ${originSize}, Saved: ${(originSize - output.length)/originSize}%`);
             const encoded_output = output.toString('base64');
             return {
                 statusCode: 200,
@@ -76,9 +77,9 @@ exports.handler = async (event, context) => {
                     ...response_headers,
                     ...headers
                 }
-            };
+            }
         } else {
-            console.log("Bypassing... Size: ", data.length);
+            console.log("Bypassing... Size: " , data.length);
             return {    // bypass
                 statusCode: 200,
                 body: data.toString('base64'),
@@ -87,13 +88,13 @@ exports.handler = async (event, context) => {
                     "content-encoding": "identity",
                     ...response_headers,
                 }
-            };
+            }
         }
     } catch (err) {
         console.error(err);
         return {
             statusCode: 500,
             body: err.message || ""
-        };
+        }
     }
-};
+}
