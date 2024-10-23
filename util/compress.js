@@ -8,7 +8,7 @@ function compress(input, webp, grayscale, quality, originSize, maxWidth = 100) {
         .resize({ width: maxWidth, kernel: sharp.kernel.lanczos3 })  // Mempertahankan aspek rasio
         .grayscale(grayscale)
         .toFormat(format, {
-            quality: quality || 90,  // Kualitas kompresi default ke 90
+            quality: quality || 50,  // Kualitas kompresi default ke 90
             progressive: true,
             optimizeScans: true
         })
