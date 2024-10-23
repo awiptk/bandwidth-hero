@@ -1,16 +1,17 @@
 const sharp = require("sharp");
 
-function compress(input, webp, grayscale, quality, originSize, maxWidth) {
-    const format = webp ? "webp" : "jpeg";
+function compress(input, grayscale, quality, originSize, maxWidth) {
+    const format = "jpeg";  // Pakai format JPEG secara default
 
-    // Kompres dan resize gambar, atur lebar maksimum menjadi 200px
+    // Kompres dan resize gambar, atur lebar maksimum menjadi 200px dengan filter Lanczos untuk hasil yang lebih halus
     return sharp(input)
-        .resize({ width: maxWidth })  // Resize gambar dengan lebar maksimum 200px, menjaga aspek rasio
+        .resize({ width: maxWidth, kernel: sharp.kernel.lanczos3 })  // Menggunakan Lanczos untuk menjaga ketajaman
         .grayscale(grayscale)
         .toFormat(format, {
             quality: quality,  // Kualitas kompresi yang diterima dari `index.js`
             progressive: true,
-            optimizeScans: true
+            optimizeScans: true,
+            mozjpeg: true,  // Gunakan mozJPEG untuk kompresi JPEG yang lebih efisien
         })
         .toBuffer({ resolveWithObject: true })
         .then(({ data: output, info }) => {
@@ -24,7 +25,8 @@ function compress(input, webp, grayscale, quality, originSize, maxWidth) {
                 },
                 output: output
             };
-        }).catch(err => {
+        })
+        .catch(err => {
             return {
                 err: err
             };
