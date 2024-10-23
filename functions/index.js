@@ -3,7 +3,8 @@ const fetch = require("node-fetch");
 const shouldCompress = require("../util/shouldCompress");
 const compress = require("../util/compress");
 
-const DEFAULT_QUALITY = 1;
+const DEFAULT_QUALITY = 30;  // Ubah kualitas default menjadi 30
+const MAX_WIDTH = 200;  // Tambahkan batas lebar maksimum gambar
 
 exports.handler = async (event, context) => {
     let { url } = event.queryStringParameters;
@@ -57,7 +58,8 @@ exports.handler = async (event, context) => {
         const originSize = data.length;
 
         if (shouldCompress(originType, originSize, webp)) {
-            const { err, output, headers } = await compress(data, webp, grayscale, quality, originSize);   // compress
+            // Tambahkan parameter MAX_WIDTH untuk membatasi lebar gambar
+            const { err, output, headers } = await compress(data, webp, grayscale, quality, originSize, MAX_WIDTH);   
 
             if (err) {
                 console.log("Conversion failed: ", url);
@@ -69,8 +71,7 @@ exports.handler = async (event, context) => {
             return {
                 statusCode: 200,
                 body: encoded_output,
-                isBase64Encoded: true,  // note: The final size we receive is `originSize` only, maybe it is decoding it server side, because at client side i do get the decoded image directly
-                // "content-length": encoded_output.length,     // this doesn't have any effect, this header contains the actual data size, (decrypted binary data size, not the base64 version)
+                isBase64Encoded: true,
                 headers: {
                     "content-encoding": "identity",
                     ...response_headers,
@@ -85,7 +86,6 @@ exports.handler = async (event, context) => {
                 isBase64Encoded: true,
                 headers: {
                     "content-encoding": "identity",
-                    // "x-proxy-bypass": '1',
                     ...response_headers,
                 }
             }
