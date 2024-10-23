@@ -4,7 +4,7 @@ const shouldCompress = require("../util/shouldCompress");
 const compress = require("../util/compress");
 
 const DEFAULT_QUALITY = 99;  // Ubah kualitas default menjadi 30
-const MAX_WIDTH = 300;  // Tambahkan batas lebar maksimum gambar
+const MAX_WIDTH = 400;  // Tambahkan batas lebar maksimum gambar
 
 exports.handler = async (event, context) => {
     let { url } = event.queryStringParameters;
