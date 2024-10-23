@@ -3,8 +3,8 @@ const fetch = require("node-fetch");
 const shouldCompress = require("../util/shouldCompress");
 const compress = require("../util/compress");
 
-const DEFAULT_QUALITY = 30;  // Ubah kualitas default menjadi 30
-const MAX_WIDTH = 200;  // Tambahkan batas lebar maksimum gambar
+const DEFAULT_QUALITY = 70;  // Ubah kualitas default menjadi 30
+const MAX_WIDTH = 300;  // Tambahkan batas lebar maksimum gambar
 
 exports.handler = async (event, context) => {
     let { url } = event.queryStringParameters;
