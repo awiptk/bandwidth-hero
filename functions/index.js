@@ -3,12 +3,12 @@ const fetch = require("node-fetch");
 const shouldCompress = require("../util/shouldCompress");
 const compress = require("../util/compress");
 
-const DEFAULT_QUALITY = 150;
-const MAX_WIDTH = 500;
+const DEFAULT_QUALITY = 70;  // Mengatur kualitas default menjadi 70
+const DEFAULT_MAX_WIDTH = 200;  // Mengatur lebar maksimum gambar menjadi 200px
 
 exports.handler = async (event, context) => {
     let { url } = event.queryStringParameters;
-    const { bw, l } = event.queryStringParameters;  // Hapus jpeg karena tidak diperlukan lagi
+    const { jpeg, bw, l, w } = event.queryStringParameters;  // Tambahkan parameter 'w' untuk maxWidth
 
     if (!url) {
         return {
@@ -18,7 +18,7 @@ exports.handler = async (event, context) => {
     }
 
     try {
-        url = JSON.parse(url);  // if simple string, then will remain so 
+        url = JSON.parse(url);  // Jika string sederhana, akan tetap menjadi string
     } catch { }
 
     if (Array.isArray(url)) {
@@ -27,8 +27,10 @@ exports.handler = async (event, context) => {
 
     url = url.replace(/http:\/\/1\.1\.\d\.\d\/bmi\/(https?:\/\/)?/i, "http://");
 
+    const webp = !jpeg;
     const grayscale = bw != 0;
     const quality = parseInt(l, 10) || DEFAULT_QUALITY;
+    const maxWidth = parseInt(w, 10) || DEFAULT_MAX_WIDTH;  // Mengatur maxWidth berdasarkan parameter atau default 200
 
     try {
         let response_headers = {};
@@ -43,26 +45,27 @@ exports.handler = async (event, context) => {
             if (!res.ok) {
                 return {
                     statusCode: res.status || 302
-                }
+                };
             }
 
             response_headers = res.headers;
             return {
                 data: await res.buffer(),
                 type: res.headers.get("content-type") || ""
-            }
+            };
         });
 
         const originSize = data.length;
 
-        if (shouldCompress(originType, originSize, false)) {  // False karena kita selalu pakai JPEG
-            const { err, output, headers } = await compress(data, grayscale, quality, originSize, MAX_WIDTH);
+        if (shouldCompress(originType, originSize, webp)) {
+            const { err, output, headers } = await compress(data, webp, grayscale, quality, originSize, maxWidth);  // Tambahkan maxWidth ke fungsi compress
 
             if (err) {
                 console.log("Conversion failed: ", url);
                 throw err;
             }
 
+            console.log(`From ${originSize}, Saved: ${(originSize - output.length)/originSize}%`);
             const encoded_output = output.toString('base64');
             return {
                 statusCode: 200,
