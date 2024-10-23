@@ -6,7 +6,7 @@ function compress(input, webp, grayscale, quality, originSize) {
 	return sharp(input)
 		.grayscale(grayscale)
 		.toFormat(format, {
-			quality: 30,
+			quality: 1,
 			progressive: true,
 			optimizeScans: true
 		})
