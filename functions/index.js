@@ -3,12 +3,11 @@ const fetch = require("node-fetch");
 const shouldCompress = require("../util/shouldCompress");
 const compress = require("../util/compress");
 
-const DEFAULT_QUALITY = 90;  // Mengatur kualitas default menjadi 70
-const DEFAULT_MAX_WIDTH = 500;  // Mengatur lebar maksimum gambar menjadi 200px
+const DEFAULT_QUALITY = 90; // Kualitas default
 
 exports.handler = async (event, context) => {
     let { url } = event.queryStringParameters;
-    const { jpeg, bw, l, w } = event.queryStringParameters;  // Tambahkan parameter 'w' untuk maxWidth
+    const { jpeg, bw, l } = event.queryStringParameters;
 
     if (!url) {
         return {
@@ -18,19 +17,19 @@ exports.handler = async (event, context) => {
     }
 
     try {
-        url = JSON.parse(url);  // Jika string sederhana, akan tetap menjadi string
+        url = JSON.parse(url);  // if simple string, then will remain so 
     } catch { }
 
     if (Array.isArray(url)) {
         url = url.join("&url=");
     }
 
+    // by now, url is a string
     url = url.replace(/http:\/\/1\.1\.\d\.\d\/bmi\/(https?:\/\/)?/i, "http://");
 
     const webp = !jpeg;
     const grayscale = bw != 0;
     const quality = parseInt(l, 10) || DEFAULT_QUALITY;
-    const maxWidth = parseInt(w, 10) || DEFAULT_MAX_WIDTH;  // Mengatur maxWidth berdasarkan parameter atau default 200
 
     try {
         let response_headers = {};
@@ -58,14 +57,15 @@ exports.handler = async (event, context) => {
         const originSize = data.length;
 
         if (shouldCompress(originType, originSize, webp)) {
-            const { err, output, headers } = await compress(data, webp, grayscale, quality, originSize, maxWidth);  // Tambahkan maxWidth ke fungsi compress
+            // Di sini kita mengatur maxWidth menjadi 500
+            const { err, output, headers } = await compress(data, webp, grayscale, quality, originSize, 500); // Memastikan maxWidth adalah 500
 
             if (err) {
                 console.log("Conversion failed: ", url);
                 throw err;
             }
 
-            console.log(`From ${originSize}, Saved: ${(originSize - output.length)/originSize}%`);
+            console.log(`From ${originSize}, Saved: ${(originSize - output.length) / originSize * 100}%`);
             const encoded_output = output.toString('base64');
             return {
                 statusCode: 200,
@@ -79,7 +79,7 @@ exports.handler = async (event, context) => {
             };
         } else {
             console.log("Bypassing... Size: ", data.length);
-            return {
+            return {    // bypass
                 statusCode: 200,
                 body: data.toString('base64'),
                 isBase64Encoded: true,
