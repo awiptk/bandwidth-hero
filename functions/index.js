@@ -57,7 +57,7 @@ exports.handler = async (event, context) => {
 
         const originSize = data.length;
 
-        if (shouldCompress(originType, originSize, webp)) {
+        if (shouldCompress(originType, originSize)) {
             // Tambahkan parameter MAX_WIDTH untuk membatasi lebar gambar
             const { err, output, headers } = await compress(data, webp, grayscale, quality, originSize, MAX_WIDTH);   
 
