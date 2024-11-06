@@ -1,10 +1,17 @@
 const sharp = require("sharp");
 
-function compress(input, quality, originSize) {
-    const format = "jpeg";  // Ganti ke jpeg, bukan webp
+function compress(input, webp, grayscale, quality, originSize, maxWidth) {
+    const format = webp ? "webp" : "jpeg";
 
+    // Kompres dan resize gambar, atur lebar maksimum menjadi 200px
     return sharp(input)
-        .jpeg({ quality, progressive: true, optimizeScans: true })  // Hanya JPEG
+        .resize({ width: maxWidth })  // Resize gambar dengan lebar maksimum 200px, menjaga aspek rasio
+        .grayscale(grayscale)
+        .toFormat(format, {
+            quality: quality,  // Kualitas kompresi yang diterima dari `index.js`
+            progressive: true,
+            optimizeScans: true
+        })
         .toBuffer({ resolveWithObject: true })
         .then(({ data: output, info }) => {
             return {
@@ -18,7 +25,9 @@ function compress(input, quality, originSize) {
                 output: output
             };
         }).catch(err => {
-            return { err: err };
+            return {
+                err: err
+            };
         });
 }
 
