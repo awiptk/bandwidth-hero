@@ -1,6 +1,6 @@
 const sharp = require("sharp");
 
-function compress(input, webp, grayscale, quality, originSize, maxWidth) {
+function compress(input, grayscale, quality, originSize, maxWidth) {
     const format = "jpeg";
 
     // Kompres dan resize gambar, atur lebar maksimum menjadi 200px
