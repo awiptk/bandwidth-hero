@@ -22,18 +22,21 @@ exports.handler = async (event, context) => {
         // Logging untuk memastikan URL yang diterima
         console.log('Received URL:', url);
 
-        // Pastikan URL yang diterima ter-encode dengan benar
-        url = decodeURIComponent(url);  // Dekode URL sebelum memprosesnya
+        // Dekode URL yang diterima agar karakter spesial dapat diproses dengan benar
+        url = decodeURIComponent(url);  // Dekode URL untuk menangani karakter spesial seperti apostrophe
 
-        // Jika URL mengandung karakter yang tidak valid, beri peringatan
+        // Pastikan URL yang diterima sudah valid dan tidak mengandung karakter yang tidak terencode
         if (url.includes(" ")) {
             console.log("URL contains spaces, which may cause issues. URL:", url);
         }
 
-        // Jika URL mengandung karakter tidak valid, encode lagi
-        url = encodeURI(url);  // Pastikan URL di-encode dengan benar
+        // Encode kembali jika ada karakter yang belum terencode dengan benar
+        url = encodeURI(url);  // Encode URL untuk memastikan karakter-karakter terencode dengan benar
 
-        // Pastikan URL yang diterima benar dan valid
+        // Logging untuk melihat URL setelah encoding
+        console.log('Encoded URL:', url);
+
+        // Proses URL yang sudah di-decode dan di-encode
         url = url.replace(/http:\/\/1\.1\.\d\.\d\/bmi\/(https?:\/\/)?/i, "http://");
 
         const webp = !jpeg;
