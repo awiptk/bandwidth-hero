@@ -67,11 +67,12 @@ exports.handler = async (event, context) => {
             }
 
             console.log(`From ${originSize}, Saved: ${(originSize - output.length)/originSize}%`);
-            const encoded_output = output.toString('base64');
+
+            // Kirim gambar dalam format binary, bukan base64
             return {
                 statusCode: 200,
-                body: encoded_output,
-                isBase64Encoded: true,
+                body: output, // output dalam format buffer biner
+                isBase64Encoded: false,  // no need for base64 encoding
                 headers: {
                     "content-encoding": "identity",
                     ...response_headers,
@@ -80,10 +81,12 @@ exports.handler = async (event, context) => {
             }
         } else {
             console.log("Bypassing... Size: " , data.length);
+
+            // Mengirim gambar dalam format binary, bukan base64
             return {    // bypass
                 statusCode: 200,
-                body: data.toString('base64'),
-                isBase64Encoded: true,
+                body: data,  // output dalam format buffer biner
+                isBase64Encoded: false,  // no need for base64 encoding
                 headers: {
                     "content-encoding": "identity",
                     ...response_headers,
