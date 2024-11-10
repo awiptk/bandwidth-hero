@@ -19,21 +19,16 @@ exports.handler = async (event, context) => {
     }
 
     try {
-        url = JSON.parse(url);  // Jika string, tetap akan menjadi string 
-    } catch { }
+        // Pastikan URL yang diterima ter-encode dengan benar sebelum digunakan
+        url = decodeURIComponent(url);  // Dekode URL jika sebelumnya di-encode
 
-    if (Array.isArray(url)) {
-        url = url.join("&url=");
-    }
+        // Pastikan URL yang diterima benar dan valid
+        url = url.replace(/http:\/\/1\.1\.\d\.\d\/bmi\/(https?:\/\/)?/i, "http://");
 
-    // Pastikan URL yang diterima benar
-    url = url.replace(/http:\/\/1\.1\.\d\.\d\/bmi\/(https?:\/\/)?/i, "http://");
+        const webp = !jpeg;
+        const grayscale = false;
+        const quality = parseInt(l, 10) || DEFAULT_QUALITY;
 
-    const webp = !jpeg;
-    const grayscale = false;
-    const quality = parseInt(l, 10) || DEFAULT_QUALITY;
-
-    try {
         let response_headers = {};
         const { data, type: originType } = await fetch(url, {
             headers: {
@@ -44,7 +39,6 @@ exports.handler = async (event, context) => {
             }
         }).then(async res => {
             if (!res.ok) {
-                console.log("Error fetching image:", res.status, res.statusText);
                 return {
                     statusCode: res.status || 302
                 }
@@ -52,7 +46,6 @@ exports.handler = async (event, context) => {
 
             response_headers = res.headers;
             const imageData = await res.buffer();
-            console.log(`Fetched image data size: ${imageData.length} bytes`);
             return {
                 data: imageData,
                 type: res.headers.get("content-type") || ""
@@ -61,7 +54,7 @@ exports.handler = async (event, context) => {
 
         const originSize = data.length;
 
-        // Cek apakah ukuran gambar melebihi batas ukuran file (misal 2MB)
+        // Cek jika ukuran gambar melebihi batas ukuran file (misal 2MB)
         if (originSize > MAX_FILE_SIZE) {
             console.log(`Image size exceeds limit of ${MAX_FILE_SIZE / 1024 / 1024}MB.`);
             return {
@@ -71,7 +64,6 @@ exports.handler = async (event, context) => {
         }
 
         if (shouldCompress(originType, originSize, webp)) {
-            // Mengirimkan maxWidth agar gambar lebih kecil dan sesuai dengan batasan
             const { err, output, headers } = await compress(data, webp, grayscale, quality, originSize, MAX_WIDTH);
 
             if (err) {
@@ -91,7 +83,6 @@ exports.handler = async (event, context) => {
                 }
             }
         } else {
-            console.log("Bypassing... Size: ", data.length);
             return {
                 statusCode: 200,
                 body: data,  // output dalam format buffer biner
