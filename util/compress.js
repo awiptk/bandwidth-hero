@@ -1,11 +1,11 @@
 const sharp = require("sharp");
 
-function compress(input, webp, grayscale, quality, originSize, maxWidth = 200) {
-    const format = webp ? "webp" : "jpeg";  // Memilih format berdasarkan parameter webp
+function compress(input, webp, grayscale, quality, originSize, maxWidth) {
+    const format = "jpeg";
 
-    // Kompres dan resize gambar, atur lebar maksimum sesuai dengan maxWidth
+    // Resize gambar jika lebar gambar lebih besar dari maxWidth
     return sharp(input)
-        .resize({ width: maxWidth, withoutEnlargement: true })  // Menjaga agar gambar tidak lebih besar dari ukuran aslinya
+        .resize({ width: maxWidth, withoutEnlargement: true })  // Resize jika lebih besar dari maxWidth
         .grayscale(grayscale)
         .toFormat(format, {
             quality: quality,  // Kualitas kompresi yang diterima dari `index.js`
