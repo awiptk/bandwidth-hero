@@ -22,16 +22,12 @@ exports.handler = async (event, context) => {
         // Logging untuk memastikan URL yang diterima
         console.log('Received URL:', url);
 
-        // Dekode URL yang diterima agar karakter spesial dapat diproses dengan benar
-        url = decodeURIComponent(url);  // Dekode URL untuk menangani karakter spesial seperti apostrophe
+        // Menangani karakter khusus dalam URL
+        // Langkah 1: Decode URL
+        url = decodeURIComponent(url);
 
-        // Pastikan URL yang diterima sudah valid dan tidak mengandung karakter yang tidak terencode
-        if (url.includes(" ")) {
-            console.log("URL contains spaces, which may cause issues. URL:", url);
-        }
-
-        // Encode kembali jika ada karakter yang belum terencode dengan benar
-        url = encodeURI(url);  // Encode URL untuk memastikan karakter-karakter terencode dengan benar
+        // Langkah 2: Encode URL agar karakter-karakter spesial ter-handle dengan benar
+        url = encodeURI(url);  // Meng-encode URL
 
         // Logging untuk melihat URL setelah encoding
         console.log('Encoded URL:', url);
