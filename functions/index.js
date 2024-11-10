@@ -5,6 +5,7 @@ const compress = require("../util/compress");
 
 const DEFAULT_QUALITY = 85;
 const MAX_WIDTH = 300;
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // Batasi ukuran file maksimal 2MB
 
 exports.handler = async (event, context) => {
     let { url } = event.queryStringParameters;
@@ -18,21 +19,26 @@ exports.handler = async (event, context) => {
     }
 
     try {
-        url = JSON.parse(url);  // if simple string, then will remain so 
-    } catch { }
+        // Logging untuk memastikan URL yang diterima
+        console.log('Received URL:', url);
 
-    if (Array.isArray(url)) {
-        url = url.join("&url=");
-    }
+        // Menangani karakter khusus dalam URL
+        // Langkah 1: Decode URL
+        url = decodeURIComponent(url);
 
-    // by now, url is a string
-    url = url.replace(/http:\/\/1\.1\.\d\.\d\/bmi\/(https?:\/\/)?/i, "http://");
+        // Langkah 2: Encode URL agar karakter-karakter spesial ter-handle dengan benar
+        url = encodeURI(url);  // Meng-encode URL
 
-    const webp = !jpeg;
-    const grayscale = false;
-    const quality = parseInt(l, 10) || DEFAULT_QUALITY;
+        // Logging untuk melihat URL setelah encoding
+        console.log('Encoded URL:', url);
 
-    try {
+        // Proses URL yang sudah di-decode dan di-encode
+        url = url.replace(/http:\/\/1\.1\.\d\.\d\/bmi\/(https?:\/\/)?/i, "http://");
+
+        const webp = !jpeg;
+        const grayscale = false;
+        const quality = parseInt(l, 10) || DEFAULT_QUALITY;
+
         let response_headers = {};
         const { data, type: originType } = await fetch(url, {
             headers: {
@@ -49,17 +55,26 @@ exports.handler = async (event, context) => {
             }
 
             response_headers = res.headers;
+            const imageData = await res.buffer();
             return {
-                data: await res.buffer(),
+                data: imageData,
                 type: res.headers.get("content-type") || ""
             }
-        })
+        });
 
         const originSize = data.length;
 
+        // Cek jika ukuran gambar melebihi batas ukuran file (misal 2MB)
+        if (originSize > MAX_FILE_SIZE) {
+            console.log(`Image size exceeds limit of ${MAX_FILE_SIZE / 1024 / 1024}MB.`);
+            return {
+                statusCode: 400,
+                body: `Image size exceeds the limit of ${MAX_FILE_SIZE / 1024 / 1024}MB.`
+            };
+        }
+
         if (shouldCompress(originType, originSize, webp)) {
-            // Tambahkan parameter MAX_WIDTH untuk membatasi lebar gambar
-            const { err, output, headers } = await compress(data, webp, grayscale, quality, originSize, MAX_WIDTH);   
+            const { err, output, headers } = await compress(data, webp, grayscale, quality, originSize, MAX_WIDTH);
 
             if (err) {
                 console.log("Conversion failed: ", url);
@@ -67,10 +82,12 @@ exports.handler = async (event, context) => {
             }
 
             console.log(`From ${originSize}, Saved: ${(originSize - output.length)/originSize}%`);
+
+            // Encode gambar ke base64
             const encoded_output = output.toString('base64');
             return {
                 statusCode: 200,
-                body: encoded_output,
+                body: encoded_output,  // Kembalikan gambar dalam bentuk base64
                 isBase64Encoded: true,
                 headers: {
                     "content-encoding": "identity",
@@ -79,10 +96,11 @@ exports.handler = async (event, context) => {
                 }
             }
         } else {
-            console.log("Bypassing... Size: " , data.length);
-            return {    // bypass
+            // Jika tidak dikompresi, langsung encode gambar ke base64
+            const encoded_output = data.toString('base64');
+            return {
                 statusCode: 200,
-                body: data.toString('base64'),
+                body: encoded_output,  // Gambar asli dalam base64
                 isBase64Encoded: true,
                 headers: {
                     "content-encoding": "identity",
@@ -91,7 +109,7 @@ exports.handler = async (event, context) => {
             }
         }
     } catch (err) {
-        console.error(err);
+        console.error("Handler error:", err);
         return {
             statusCode: 500,
             body: err.message || ""
