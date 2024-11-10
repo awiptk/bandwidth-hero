@@ -3,8 +3,7 @@ const fetch = require("node-fetch");
 const shouldCompress = require("../util/shouldCompress");
 const compress = require("../util/compress");
 
-const DEFAULT_QUALITY = 85;
-const MAX_WIDTH = 300;
+const DEFAULT_QUALITY = 40;
 
 exports.handler = async (event, context) => {
     let { url } = event.queryStringParameters;
@@ -29,7 +28,7 @@ exports.handler = async (event, context) => {
     url = url.replace(/http:\/\/1\.1\.\d\.\d\/bmi\/(https?:\/\/)?/i, "http://");
 
     const webp = !jpeg;
-    const grayscale = false;
+    const grayscale = bw != 0;
     const quality = parseInt(l, 10) || DEFAULT_QUALITY;
 
     try {
@@ -58,8 +57,7 @@ exports.handler = async (event, context) => {
         const originSize = data.length;
 
         if (shouldCompress(originType, originSize, webp)) {
-            // Tambahkan parameter MAX_WIDTH untuk membatasi lebar gambar
-            const { err, output, headers } = await compress(data, webp, grayscale, quality, originSize, MAX_WIDTH);   
+            const { err, output, headers } = await compress(data, webp, grayscale, quality, originSize);   // compress
 
             if (err) {
                 console.log("Conversion failed: ", url);
@@ -71,7 +69,8 @@ exports.handler = async (event, context) => {
             return {
                 statusCode: 200,
                 body: encoded_output,
-                isBase64Encoded: true,
+                isBase64Encoded: true,  // note: The final size we receive is `originSize` only, maybe it is decoding it server side, because at client side i do get the decoded image directly
+                // "content-length": encoded_output.length,     // this doesn't have any effect, this header contains the actual data size, (decrypted binary data size, not the base64 version)
                 headers: {
                     "content-encoding": "identity",
                     ...response_headers,
@@ -86,6 +85,7 @@ exports.handler = async (event, context) => {
                 isBase64Encoded: true,
                 headers: {
                     "content-encoding": "identity",
+                    // "x-proxy-bypass": '1',
                     ...response_headers,
                 }
             }
