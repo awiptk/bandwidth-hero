@@ -4,8 +4,8 @@ const shouldCompress = require("../util/shouldCompress");
 const compress = require("../util/compress");
 
 const DEFAULT_QUALITY = 85;
-const MAX_WIDTH = 300;  // Batas lebar gambar maksimal
-const MAX_FILE_SIZE = 2 * 1024 * 1024;  // Batasi ukuran file maksimal 2MB
+const MAX_WIDTH = 300;
+const MAX_FILE_SIZE = 2 * 1024 * 1024; // Batasi ukuran file maksimal 2MB
 
 exports.handler = async (event, context) => {
     let { url } = event.queryStringParameters;
@@ -19,8 +19,19 @@ exports.handler = async (event, context) => {
     }
 
     try {
-        // Pastikan URL yang diterima ter-encode dengan benar sebelum digunakan
-        url = decodeURIComponent(url);  // Dekode URL jika sebelumnya di-encode
+        // Logging untuk memastikan URL yang diterima
+        console.log('Received URL:', url);
+
+        // Pastikan URL yang diterima ter-encode dengan benar
+        url = decodeURIComponent(url);  // Dekode URL sebelum memprosesnya
+
+        // Jika URL mengandung karakter yang tidak valid, beri peringatan
+        if (url.includes(" ")) {
+            console.log("URL contains spaces, which may cause issues. URL:", url);
+        }
+
+        // Jika URL mengandung karakter tidak valid, encode lagi
+        url = encodeURI(url);  // Pastikan URL di-encode dengan benar
 
         // Pastikan URL yang diterima benar dan valid
         url = url.replace(/http:\/\/1\.1\.\d\.\d\/bmi\/(https?:\/\/)?/i, "http://");
