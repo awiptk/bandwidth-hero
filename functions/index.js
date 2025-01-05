@@ -4,7 +4,7 @@ const shouldCompress = require("../util/shouldCompress");
 const compress = require("../util/compress");
 
 const DEFAULT_QUALITY = 85;
-const MAX_WIDTH = 300;
+const MAX_WIDTH = 400;
 
 exports.handler = async (event, context) => {
     let { url } = event.queryStringParameters;
