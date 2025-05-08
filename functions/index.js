@@ -3,12 +3,12 @@ const fetch = require("node-fetch");
 const shouldCompress = require("../util/shouldCompress");
 const compress = require("../util/compress");
 
-const DEFAULT_QUALITY = 85;
-const MAX_WIDTH = 400;
+const DEFAULT_WIDTH = 110;
+const DEFAULT_HEIGHT = 150;
 
 exports.handler = async (event, context) => {
     let { url } = event.queryStringParameters;
-    const { jpeg, bw, l } = event.queryStringParameters;
+    const { jpeg, bw, l, width, height } = event.queryStringParameters;
 
     if (!url) {
         return {
@@ -30,7 +30,8 @@ exports.handler = async (event, context) => {
 
     const webp = !jpeg;
     const grayscale = false;
-    const quality = parseInt(l, 10) || DEFAULT_QUALITY;
+    const imageWidth = parseInt(width, 10) || DEFAULT_WIDTH;
+    const imageHeight = parseInt(height, 10) || DEFAULT_HEIGHT;
 
     try {
         let response_headers = {};
@@ -58,8 +59,7 @@ exports.handler = async (event, context) => {
         const originSize = data.length;
 
         if (shouldCompress(originType, originSize, webp)) {
-            // Tambahkan parameter MAX_WIDTH untuk membatasi lebar gambar
-            const { err, output, headers } = await compress(data, webp, grayscale, quality, originSize, MAX_WIDTH);   
+            const { err, output, headers } = await compress(data, webp, grayscale, imageWidth, imageHeight, originSize);
 
             if (err) {
                 console.log("Conversion failed: ", url);
