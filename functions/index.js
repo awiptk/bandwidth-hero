@@ -25,7 +25,6 @@ exports.handler = async (event, context) => {
         url = url.join("&url=");
     }
 
-    // by now, url is a string
     url = url.replace(/http:\/\/1\.1\.\d\.\d\/bmi\/(https?:\/\/)?/i, "http://");
 
     const webp = !jpeg;
@@ -44,29 +43,36 @@ exports.handler = async (event, context) => {
             }
         }).then(async res => {
             if (!res.ok) {
-                return {
-                    statusCode: res.status || 302
-                }
+                return { statusCode: res.status || 302 };
             }
 
             response_headers = res.headers;
             return {
                 data: await res.buffer(),
                 type: res.headers.get("content-type") || ""
-            }
-        })
+            };
+        });
 
         const originSize = data.length;
 
         if (shouldCompress(originType, originSize, webp)) {
-            const { err, output, headers } = await compress(data, webp, grayscale, imageWidth, imageHeight, originSize);
+            const { err, output, headers } = await compress(
+                data,
+                webp,
+                grayscale,
+                imageWidth,
+                imageHeight,
+                originSize
+            );
 
             if (err) {
                 console.log("Conversion failed: ", url);
                 throw err;
             }
 
-            console.log(`From ${originSize}, Saved: ${(originSize - output.length)/originSize}%`);
+            console.log(
+                `From ${originSize}, Saved: ${(originSize - output.length) / originSize}%`
+            );
             const encoded_output = output.toString('base64');
             return {
                 statusCode: 200,
@@ -77,24 +83,24 @@ exports.handler = async (event, context) => {
                     ...response_headers,
                     ...headers
                 }
-            }
+            };
         } else {
-            console.log("Bypassing... Size: " , data.length);
-            return {    // bypass
+            console.log("Bypassing... Size: ", data.length);
+            return {
                 statusCode: 200,
                 body: data.toString('base64'),
                 isBase64Encoded: true,
                 headers: {
                     "content-encoding": "identity",
-                    ...response_headers,
+                    ...response_headers
                 }
-            }
+            };
         }
     } catch (err) {
         console.error(err);
         return {
             statusCode: 500,
             body: err.message || ""
-        }
+        };
     }
-}
+};
