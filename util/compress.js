@@ -1,43 +1,37 @@
 const sharp = require("sharp");
 
 /**
- * Fungsi untuk mengompresi gambar dengan parameter tinggi gambar (height).
+ * Kompresi gambar hanya berdasarkan lebar dan tinggi tanpa pengaturan kualitas.
  * @param {Buffer} input - Data gambar dalam bentuk buffer.
- * @param {boolean} webp - Apakah ingin menggunakan format WebP.
- * @param {boolean} grayscale - Apakah ingin mengonversi gambar menjadi grayscale.
- * @param {number} height - Tinggi gambar yang diinginkan.
- * @param {number} originSize - Ukuran asli dari gambar.
- * @param {number} maxWidth - Lebar maksimum gambar.
- * @returns {Promise<Object>} Objek berisi hasil kompresi atau error.
+ * @param {boolean} webp - Gunakan format WebP jika true, JPEG jika false.
+ * @param {boolean} grayscale - Konversi ke grayscale jika true.
+ * @param {number} width - Lebar target.
+ * @param {number} height - Tinggi target.
+ * @param {number} originSize - Ukuran asli gambar.
+ * @returns {Promise<Object>} Hasil kompresi atau error.
  */
-function compress(input, webp, grayscale, height, originSize, maxWidth) {
-    const format = webp ? "webp" : "jpeg"; // Pilih format WebP atau JPEG.
+function compress(input, webp, grayscale, width, height, originSize) {
+    const format = webp ? "webp" : "jpeg";
 
-    // Kompres dan resize gambar
     return sharp(input)
-        .resize({ width: maxWidth, height: height })  // Resize gambar dengan lebar dan tinggi maksimum
-        .grayscale(grayscale)                         // Ubah gambar menjadi grayscale jika diinginkan
-        .toFormat(format, {                           // Format output gambar
+        .resize({ width, height })
+        .grayscale(grayscale)
+        .toFormat(format, {
             progressive: true,
             optimizeScans: true
         })
-        .toBuffer({ resolveWithObject: true })        // Konversi ke buffer
-        .then(({ data: output, info }) => {
-            return {
-                err: null,
-                headers: {
-                    "content-type": `image/${format}`,
-                    "content-length": info.size,
-                    "x-original-size": originSize,
-                    "x-bytes-saved": originSize - info.size,
-                },
-                output: output
-            };
-        }).catch(err => {
-            return {
-                err: err
-            };
-        });
+        .toBuffer({ resolveWithObject: true })
+        .then(({ data: output, info }) => ({
+            err: null,
+            headers: {
+                "content-type": `image/${format}`,
+                "content-length": info.size,
+                "x-original-size": originSize,
+                "x-bytes-saved": originSize - info.size
+            },
+            output
+        }))
+        .catch(err => ({ err }));
 }
 
 module.exports = compress;
