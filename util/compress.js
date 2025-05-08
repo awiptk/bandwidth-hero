@@ -1,18 +1,27 @@
 const sharp = require("sharp");
 
-function compress(input, webp, grayscale, quality, originSize, maxWidth) {
-    const format = "jpeg";
+/**
+ * Fungsi untuk mengompresi gambar dengan parameter tinggi gambar (height).
+ * @param {Buffer} input - Data gambar dalam bentuk buffer.
+ * @param {boolean} webp - Apakah ingin menggunakan format WebP.
+ * @param {boolean} grayscale - Apakah ingin mengonversi gambar menjadi grayscale.
+ * @param {number} height - Tinggi gambar yang diinginkan.
+ * @param {number} originSize - Ukuran asli dari gambar.
+ * @param {number} maxWidth - Lebar maksimum gambar.
+ * @returns {Promise<Object>} Objek berisi hasil kompresi atau error.
+ */
+function compress(input, webp, grayscale, height, originSize, maxWidth) {
+    const format = webp ? "webp" : "jpeg"; // Pilih format WebP atau JPEG.
 
-    // Kompres dan resize gabar, atur lebar maksimum menjadi 200px
+    // Kompres dan resize gambar
     return sharp(input)
-        .resize({ width: maxWidth })  // Resize gambar dengan lebar maksimum 200px, menjaga aspek rasio
-        .grayscale(grayscale)
-        .toFormat(format, {
-            quality: quality,  // Kualitas kompresi yang diterima dari `index.js`
+        .resize({ width: maxWidth, height: height })  // Resize gambar dengan lebar dan tinggi maksimum
+        .grayscale(grayscale)                         // Ubah gambar menjadi grayscale jika diinginkan
+        .toFormat(format, {                           // Format output gambar
             progressive: true,
             optimizeScans: true
         })
-        .toBuffer({ resolveWithObject: true })
+        .toBuffer({ resolveWithObject: true })        // Konversi ke buffer
         .then(({ data: output, info }) => {
             return {
                 err: null,
